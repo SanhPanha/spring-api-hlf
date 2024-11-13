@@ -1,0 +1,27 @@
+server:
+  port: 8181
+spring:
+  application:
+    name: api-hyperledger-fabric-spring
+
+# configuration about the network that we are working with
+fabric:
+  wallet:
+    config-path: wallets
+  network:
+    channel: mychannel
+    discovery: true
+    # this is the connection profile
+    config-path: ./fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/connection-org1.json
+  ca:
+    #    default admin credentials for the fabric ca of each org
+    admin:
+      username: admin
+      password: adminpw
+    org1:
+      name: Org1
+      mspId: Org1MSP
+      caUrl: "https://localhost:7054"
+      certificatePath: ./fabric-samples/test-network/organizations/fabric-ca/org1/ca-cert.pem
+    tls:
+      enabled: true
