@@ -17,6 +17,7 @@ public class FabricGatewayConfig {
     private String walletPath;
     @Value("${fabric.network.config-path}")
     private String networkConfigPath;
+//    @Value("${fabric.wallet.config-path}")
     private Wallet wallet;
     @Value("${fabric.network.discovery}")
     private Boolean isDiscovered;
