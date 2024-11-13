@@ -1,15 +1,12 @@
 package anuznomii.lol.apihyperledgerfabricspring.configuration;
-
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
-
 import org.hyperledger.fabric.gateway.Gateway;
 import org.hyperledger.fabric.gateway.Wallet;
 import org.hyperledger.fabric.gateway.Wallets;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Configuration
@@ -39,7 +36,5 @@ public class FabricGatewayConfig {
         var gateway = builder.connect();
         log.info("Gateway connection is successful!");
         return gateway;
-
     }
-
 }

@@ -22,8 +22,7 @@ public class ChaincodeService {
 
         // try catch this
         var network = gateway.getNetwork("mychannel");
-        var contract = network.getContract(chaincodeName); // basic-> is our chaicnode name
-
+        var contract = network.getContract(chaincodeName); // basic-> is our chaincode name
         var result = contract.submitTransaction(methodName, args);
         log.info("result : {}", result);
 
@@ -41,5 +40,4 @@ public class ChaincodeService {
         var result = contract.evaluateTransaction(methodName, args);
         return new String(result);
     }
-
 }

@@ -1,28 +1,22 @@
 package anuznomii.lol.apihyperledgerfabricspring.services;
 
-import java.io.File;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.PrivateKey;
 import java.util.Properties;
 import java.util.Set;
-
-import org.bouncycastle.jcajce.provider.asymmetric.ec.SignatureSpi.ecDSARipeMD160;
+import anuznomii.lol.apihyperledgerfabricspring.utils.FabricUtils;
 import org.hyperledger.fabric.gateway.Identities;
 import org.hyperledger.fabric.gateway.Wallet;
 import org.hyperledger.fabric.gateway.Wallets;
 import org.hyperledger.fabric.sdk.Enrollment;
 import org.hyperledger.fabric.sdk.User;
 import org.hyperledger.fabric.gateway.X509Identity;
-// import org.hyperledger.fabric.sdk.identity.X509Identity;
 import org.hyperledger.fabric.sdk.security.CryptoSuite;
-import org.hyperledger.fabric.sdk.security.CryptoSuiteFactory;
 import org.hyperledger.fabric_ca.sdk.EnrollmentRequest;
 import org.hyperledger.fabric_ca.sdk.HFCAClient;
 import org.hyperledger.fabric_ca.sdk.RegistrationRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 import anuznomii.lol.apihyperledgerfabricspring.models.CAEnrollmentRequest;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +35,6 @@ public class FabricCAService {
     @Value("${fabric.wallet.config-path}")
     private String walletPath;
     private Wallet wallet;
-
     @Value("${fabric.ca.tls.enabled}")
     private Boolean tlsEnabled;
 
@@ -57,8 +50,17 @@ public class FabricCAService {
         // create wallet instance
         this.wallet = Wallets.newFileSystemWallet(
                 Paths.get(walletPath));
+
+        //Check if the identity exists
+        if (FabricUtils.checkIdentityExistance("admin", wallet)){
+            log.info("Admin identity already exists in the wallet");
+            return ;
+        }else {
+            log.info("Admin identity does not exist in the wallet");
+        }
+
         // create admin first, in order to register and enroll the user
-//        createAdminUserOrg1();
+        createAdminUserOrg1();
 
         // Create a new user 
         CAEnrollmentRequest request = CAEnrollmentRequest.builder()
@@ -68,7 +70,7 @@ public class FabricCAService {
                 .secret("user1pw")
                 .registrarUsername("admin")
                 .build();
-//        registerAndEnrollUser(request);
+        registerAndEnrollUser(request);
             
     }
 
@@ -76,16 +78,11 @@ public class FabricCAService {
 
         // HFCA client
         var props = new Properties();
-        if (tlsEnabled) {
-            File pemFile = new File(org1CertificatePath);
-            if (!pemFile.exists()) {
-                throw new Exception("Certificate org1 CA file does not exist");
-            }
-            props.setProperty("pemFile", org1CertificatePath);
-            props.setProperty("allowAllHostNames", "true");
-            props.put("connectTimeout", "30000");
-            props.put("readTimeout", "30000");
-        }
+        FabricUtils.setTlsProps(
+                props,
+                org1CertificatePath,
+                tlsEnabled
+        );
         var caClient = HFCAClient.createNewInstance(
                 org1CaUrl,
                 props);
@@ -96,7 +93,7 @@ public class FabricCAService {
                 request.getUsername());
         registrationRequest.setAffiliation(request.getAffiliation());
         registrationRequest.setType("client");
-        // we also have the auto generate the secret if the user doens't prvoide us the
+        // we also have the auto generate the secret if the user doesn't provide us the
         // secret
         registrationRequest.setSecret(request.getSecret());
         registrationRequest.setMaxEnrollments(-1); // unlimited enrollments\
@@ -105,7 +102,7 @@ public class FabricCAService {
         // 1.1 getting the registrar
         var adminUser = new User() {
 
-            X509Identity x509Identity = (X509Identity) adminIdentity;
+            final X509Identity x509Identity = (X509Identity) adminIdentity;
 
             @Override
             public String getName() {
@@ -185,20 +182,11 @@ public class FabricCAService {
 
         // 2. Setup HFCAClient
         var props = new Properties();
-        if (tlsEnabled) {
-            // we will configure the tls properties for the HFCA client
-            // 2.1. configure tls
-            File pemFile = new File(org1CertificatePath);
-            if (!pemFile.exists()) {
-                throw new Exception("Certificate org1 CA file does not exist");
-            }
-            // verify the type of the certificate && validity of the certificate
-            props.setProperty("pemFile", org1CertificatePath);
-            props.setProperty("allowAllHostNames", "true");
-            // 2.2. configure the timeout
-            props.put("connectTimeout", "30000");
-            props.put("readTimeout", "30000");
-        }
+        FabricUtils.setTlsProps(
+                props,
+                org1CertificatePath,
+                tlsEnabled
+        );
         var caClient = HFCAClient.createNewInstance(
                 org1CaUrl,
                 props);
@@ -217,5 +205,4 @@ public class FabricCAService {
         wallet.put("admin", adminIdentity);
         log.info("Successfully store the identity to the wallet !  ");
     }
-
 }
